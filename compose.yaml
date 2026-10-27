@@ -1,0 +1,20 @@
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 3000:3000
+
+  mongo:
+    image: mongo:latest
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: user
+      MONGODB_INITDB_ROOT_PASSWORD: password
+      MONGODB_DB: nextdb
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
