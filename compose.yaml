@@ -2,15 +2,16 @@ services:
   server:
     build:
       context: .
+    environment:
+      MONGODB_URI: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo:27017/?authSource=admin
     ports:
       - 3000:3000
 
   mongo:
     image: mongo:latest
     environment:
-      MONGODB_INITDB_ROOT_USERNAME: user
-      MONGODB_INITDB_ROOT_PASSWORD: password
-      MONGODB_DB: nextdb
+      MONGODB_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGODB_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
     ports:
       - 27017:27017
     volumes:
