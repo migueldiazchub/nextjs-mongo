@@ -1,36 +1,43 @@
-"use client";
+import { revalidatePath } from "next/cache";
+import {
+  insertarTarea,
+  obtenerTareas,
+  borrarTarea,
+  borrarTodo,
+} from "@/lib/mongodb";
 
-import { useState } from "react";
+export default async function Page() {
+  const tareas = await obtenerTareas();
 
-type Tarea = {
-  id: number;
-  titulo: string;
-  descripcion: string;
-};
+  async function crearTarea(formData: FormData) {
+    "use server";
 
-export default function Page() {
-  const [titulo, setTitulo] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [tareas, setTareas] = useState<Tarea[]>([]);
+    const titulo = formData.get("titulo");
+    const descripcion = formData.get("descripcion");
 
-  function nuevaTarea() {
+    if (typeof titulo !== "string" || typeof descripcion !== "string") {
+      return;
+    }
+
     if (titulo.trim() === "" || descripcion.trim() === "") {
       return;
     }
 
-    const nuevaTarea: Tarea = {
-      id: Date.now(),
-      titulo: titulo.trim(),
-      descripcion: descripcion.trim(),
-    };
+    await insertarTarea(titulo.trim(), descripcion.trim());
 
-    setTareas([...tareas, nuevaTarea]);
-    setTitulo("");
-    setDescripcion("");
+    revalidatePath("/");
   }
 
-  function eliminarTarea(id: number) {
-    setTareas(tareas.filter((tarea) => tarea.id != id));
+  async function eliminarTarea(formData: FormData) {
+    "use server";
+
+    // await borrarTodo();
+
+    const id = formData.get("id") as string;
+
+    await borrarTarea(id);
+
+    revalidatePath("/");
   }
 
   return (
@@ -39,31 +46,32 @@ export default function Page() {
         <h1 className="text-5xl font-semibold">Gestor de Tareas React</h1>
       </header>
       <main className="h-[85vh] pt-[5vh] flex justify-center gap-10 bg-gray-600">
-        <div className="h-1/2 w-1/3 pb-5 border rounded-sm flex flex-col justify-between items-center bg-gray-500">
+        <form
+          action={crearTarea}
+          className="h-1/2 w-1/3 pb-5 border rounded-sm flex flex-col justify-between items-center bg-gray-500"
+        >
           <h2 className="w-full h-20 text-3xl rounded-t-sm text-center content-center bg-gray-700">
             <strong>Formulario</strong>
           </h2>
           <div className="w-2/3 h-1/3 flex flex-col justify-between">
             <input
               className="pl-2 border rounded-md bg-gray-200 text-gray-800 placeholder:text-gray-400"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
+              name="titulo"
               placeholder="Título de la tarea"
             ></input>
             <textarea
               className="h-2/3 pl-2 border rounded-md resize-none bg-gray-200 text-gray-800 placeholder:text-gray-400"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              name="descripcion"
               placeholder="Descripción de la tarea"
             ></textarea>
           </div>
           <button
             className="w-50 h-1/6 rounded-sm bg-gray-600 text-gray-100 hover:bg-gray-400 hover:text-gray-800"
-            onClick={nuevaTarea}
+            type="submit"
           >
             Añadir
           </button>
-        </div>
+        </form>
         <div className="border h-4/5 w-1/3 rounded-sm overflow-auto bg-gray-500">
           <h2 className="w-full h-20 rounded-t-sm text-3xl text-center content-center bg-gray-700">
             <strong>Tareas</strong>
@@ -85,12 +93,12 @@ export default function Page() {
                       <strong>Descripción:</strong> {tarea.descripcion}
                     </p>
                   </div>
-                  <button
-                    className="w-20 h-1/2 mt-1 mr-1 rounded-sm bg-gray-600 text-gray-100 hover:bg-gray-400 hover:text-gray-800"
-                    onClick={() => eliminarTarea(tarea.id)}
-                  >
-                    Borrar
-                  </button>
+                  <form action={eliminarTarea}>
+                    <input type="hidden" name="id" value={tarea.id} />
+                    <button className="w-20 h-1/2 mt-1 mr-1 rounded-sm bg-gray-600 text-gray-100 hover:bg-gray-400 hover:text-gray-800">
+                      Borrar
+                    </button>
+                  </form>
                 </article>
               ))}
             </div>

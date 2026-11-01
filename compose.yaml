@@ -2,16 +2,18 @@ services:
   server:
     build:
       context: .
-    environment:
-      MONGODB_URI: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo:27017/?authSource=admin
     ports:
       - 3000:3000
+    depends_on:
+      mongo:
+        condition: service_completed_successfully
 
   mongo:
     image: mongo:latest
     environment:
-      MONGODB_INITDB_ROOT_USERNAME: ${MONGODB_USER}
-      MONGODB_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGODB_INITDB_ROOT_USERNAME: root
+      MONGODB_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: gestorDB
     ports:
       - 27017:27017
     volumes:
